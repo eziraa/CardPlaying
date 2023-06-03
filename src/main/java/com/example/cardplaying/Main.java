@@ -1,7 +1,9 @@
 package com.example.cardplaying;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -19,6 +21,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.StringTokenizer;
+
+import static com.example.cardplaying.Player1.isWon;
 import static com.example.cardplaying.Player1.player1Cards;
 import static com.example.cardplaying.Player2.isActive;
 import static com.example.cardplaying.Player2.player2Cards;
@@ -27,7 +31,7 @@ import static com.example.cardplaying.Player2.player2Cards;
 public class Main extends Application {
     ArrayList<ImageView> playlist = new ArrayList<ImageView>();
     ArrayList<ImageView> extraList = new ArrayList<ImageView>();
-    Scene scene = new Scene(new Pane(), 1000, 700);
+    Scene scene = new Scene(new Pane(), 1400, 700);
     ArrayList<ImageView> allCards = new ArrayList<>();
     public static ImageView imageView;
     Stage stage = new Stage();
@@ -57,7 +61,7 @@ public class Main extends Application {
         CardImageView heart7=new CardImageView("h7.png");
         CardImageView heart8=new CardImageView("h8.png");
         CardImageView heart9=new CardImageView("h9.png");
-        CardImageView heart10=new CardImageView("h10.png");
+        CardImageView heart10=new CardImageView("h0.png");
         CardImageView heartK=new CardImageView("hk.png");
         CardImageView heartJ=new CardImageView("hj.png");
         CardImageView heartQ=new CardImageView("hq.png");
@@ -141,17 +145,29 @@ public class Main extends Application {
         allCards.add(deckJ.imageView);
         allCards.add(deckA.imageView);
         ArrayList<ImageView> arr =mixing(allCards);
+        player1Cards.clear();
+        player2Cards.clear();
         System.out.println(allCards.size());
         for (int i =0; i < arr.size();i++){
-            if ( i < 9)
-                player1Cards.add(arr.get(i));
-            else if (i < 18)
-                player2Cards.add(arr.get(i));
-            else
-                playlist.add(arr.get(i));
+            if (Player1.isActive) {
+                if (i < 10)
+                    player1Cards.add(arr.get(i));
+                else if (i < 19)
+                    player2Cards.add(arr.get(i));
+                else
+                    playlist.add(arr.get(i));
+            }else{
+                if (i < 9)
+                    player1Cards.add(arr.get(i));
+                else if (i < 19)
+                    player2Cards.add(arr.get(i));
+                else
+                    playlist.add(arr.get(i));
+            }
         }
 
         load(grouping(player1Cards),grouping(player2Cards),grouping(playlist),extraList,stage);
+        scene.setFill(Color.VIOLET);
     }
     public void load(ArrayList<ImageView> player1Cards,ArrayList<ImageView> player2Cards,ArrayList<ImageView> playlist,ArrayList<ImageView> extraList,Stage stage) {
         StackPane player1 = new StackPane();
@@ -177,11 +193,35 @@ public class Main extends Application {
         player1.minWidthProperty().bind(stage.widthProperty().divide(4).add(player1Cards.size() * 10));
         player2.minWidthProperty().bind(stage.widthProperty().divide(4).add(player2Cards.size() * 10));
         extraBoard.minWidthProperty().bind(stage.widthProperty().divide(4).add(extraList.size() * 10));
-        playerPlace.getChildren().addAll(player1, player2);
-        playerPlace.translateXProperty().bind(stage.widthProperty().divide(4));
         playerPlace.setSpacing(100);
-        imageView = new ImageView(new Image(Objects.requireNonNull(CardImageView.class.getResourceAsStream("bd.png"))));
+        playerPlace.setStyle("-fx-background-color:blue; -fx-padding:10;");
+        imageView = new ImageView(new Image(Objects.requireNonNull(CardImageView.class.getResourceAsStream("cbb.png"))));
         playingBoard.getChildren().add(imageView);
+        Button restart = new Button("Restart");
+        restart.setFont(Font.font("verdana", FontWeight.BOLD,24));
+        restart.setStyle("-fx-background-color:yellow");
+        restart.setOnAction(e->{
+            try {
+                Player1.isWon = false;
+                Player2.isWon = false;
+                allCards.clear();
+                playlist.clear();
+                extraList.clear();
+                player1Cards.clear();
+                player2Cards.clear();
+                if (Player1.isWon){
+                    isActive1 = true;
+                    isActive2 = false;
+                }
+                else if (Player2.isWon){
+                    isActive1 = false;
+                    isActive2 = true;
+                }
+                start(stage);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         imageView.setFitWidth(110);
         imageView.setFitHeight(150);
         Text label1= new Text("🎉Won🎉");
@@ -190,13 +230,27 @@ public class Main extends Application {
         label2.setFill(Color.RED);
         label1.setFont(Font.font("verdana", FontWeight.BOLD,50));
         label2.setFont(Font.font("verdana", FontWeight.BOLD,50));
+        Text p1= new Text("Player 1");
+        Text p2 = new Text("Player 2");
+        StackPane playerOne = new StackPane();
+        StackPane playerTwo = new StackPane();
+        playerOne.getChildren().add(p1);
+        playerTwo.getChildren().add(p2);
+
+        p1.setFill(Color.GREEN);
+        p2.setFill(Color.GREEN);
+        p1.setTranslateX(30);
+        p2.setTranslateX(-30);
+        p1.setFont(Font.font("verdana", FontWeight.BOLD,30));
+        p2.setFont(Font.font("verdana", FontWeight.BOLD,30));
         all.getChildren().addAll(playerPlace, extraBoard, playingBoard);
+        playerPlace.getChildren().addAll(playerOne,player1, player2,playerTwo);
         int j = 0;
         for (int i = 0; i < player1Cards.size(); i++) {
             if (i < player1Cards.size() / 2)
-                player1Cards.get(i).setTranslateX((player1Cards.size() / 2 - i) * -20);
+                player1Cards.get(i).setTranslateX((player1Cards.size() / 2 - i) * -15);
             else {
-                player1Cards.get(i).setTranslateX(j * 20);
+                player1Cards.get(i).setTranslateX(j * 15);
                 j++;
             }
             player1Cards.get(i).setFitWidth(110);
@@ -217,6 +271,8 @@ public class Main extends Application {
             extraList.get(i).setStyle("-fx-background-color:blue;-fx-border-width:10;-fx-border-color:red");
         }
         j = 0;
+
+
         for (int i = 0; i < player2Cards.size(); i++) {
             if (i < player2Cards.size() / 2)
                 player2Cards.get(i).setTranslateX((player2Cards.size() / 2 - i) * -20);
@@ -232,13 +288,14 @@ public class Main extends Application {
             playlist.get(i).setFitWidth(110);
             playlist.get(i).setFitHeight(150);
         }
-        makeResponsible(stage);
+        makeResponsibe(stage);
         scene = new Scene(all, scene.getWidth(), scene.getHeight());
         scene.setFill(Color.VIOLET);
         stage.setTitle("Card Playing!");
         stage.setScene(scene);
         stage.show();
-
+        if (extraList.size()>0)
+        extraList.get(extraList.size()-1).setFitHeight(160);
         if (isActive1) {
             player1.setStyle("-fx-background-color:green");
             player2.setStyle("-fx-background-color:red");
@@ -252,12 +309,16 @@ public class Main extends Application {
             player2.getChildren().add(label2);
             isActive1 = false;
             isActive2 = false;
+            extraBoard.getChildren().clear();
+            extraBoard.getChildren().add(restart);
         }
         else if (Player2.isWon){
             player2.getChildren().add(label1);
             player1.getChildren().add(label2);
             isActive1 = false;
             isActive2 = false;
+            extraBoard.getChildren().clear();
+            extraBoard.getChildren().add(restart);
         }
     }
 
@@ -282,36 +343,67 @@ public class Main extends Application {
         return arrayList;
     }
 
+    public ArrayList<ImageView> grouping(ArrayList<ImageView> list2) {
+        ArrayList<ArrayList<ImageView>> groupedLists = new ArrayList<>();
+        ArrayList<ImageView> list = new ArrayList<>(list2);
+        ArrayList<ImageView> list1 = new ArrayList<>();
 
-    public ArrayList<ImageView> grouping(ArrayList<ImageView> list2){
-        ArrayList<ImageView> list1 = new ArrayList<ImageView>() ;
-        ArrayList<ImageView> list = new ArrayList<ImageView>() ;
-        for (int j = 0; j < list2.size(); j++) {
-            list.add(list2.get(j));
-        }
-        list1.add(list.get(0));
-        for (int j = 1; j < list.size(); j++) {
-            if ((list.get(0).getStyleClass().get(1).equalsIgnoreCase(list.get(j).getStyleClass().get( 1)))) {
-                list1.add(list.get(j));
-            }
-        }
-        for (int i =1; i < list.size(); i++) {
-            if (CardImageView.check(list1,list.get(i))) {
-                list1.add(list.get(i));
-                for (int j = i+1; j < list.size(); j++) {
-                    if ((list.get(i).getStyleClass().get(1).equalsIgnoreCase(list.get(j).getStyleClass().get(1)) && CardImageView.check(list1, list.get(j))) ){
-                        list1.add(list.get(j));
-//                        list.remove(j);
-                        i--;
-                    }
+        while (!list.isEmpty()) {
+            ArrayList<ImageView> group = new ArrayList<>();
+            ImageView firstImageView = list.get(0);
+            group.add(firstImageView);
+            String firstStyleClass = firstImageView.getStyleClass().get(1).trim();
+
+            for (int i = 1; i < list.size(); i++) {
+                ImageView imageView = list.get(i);
+                String styleClass = imageView.getStyleClass().get(1).trim();
+
+                if (firstStyleClass.equalsIgnoreCase(styleClass)) {
+                    group.add(imageView);
                 }
             }
 
+            groupedLists.add(group);
+            list.removeAll(group);
         }
+        for (ArrayList<ImageView> imageView : groupedLists ) {
+            list1.addAll(imageView);
+        }
+
         return list1;
     }
 
-    public void makeResponsible(Stage stage){
+    public ImageView selectCard(ArrayList<ImageView> imageViews){
+        ImageView imageView2 = new ImageView();
+        ImageView imageView3 = new ImageView();
+        ImageView imageView4 = new ImageView();
+        ImageView imageView5 = new ImageView();
+        for (ImageView imageView1 : imageViews ) {
+            int i = 0;
+            for (ImageView img: imageViews ) {
+                if (imageView1.getStyleClass().get(1).equalsIgnoreCase(img.getStyleClass().get(1)))
+                    i++;
+            }
+            if (i==1)
+                imageView2 = imageView1;
+            else if (i==2)
+                imageView3 = imageView1;
+            else if (i==3)
+                imageView4 = imageView1;
+            else
+                imageView5 = imageView1;
+
+        }if (imageView2.getStyleClass().size()>1)
+            return imageView2;
+        else if (imageView3.getStyleClass().size()>1)
+            return imageView3;
+        else if (imageView4.getStyleClass().size()>1) {
+            return imageView4;
+        }else
+            ;
+        return imageView5;
+    }
+    public void makeResponsibe(Stage stage){
         for (int i = 0; i < player1Cards.size(); i++) {
             final int m = i;
             player1Cards.get(i).setOnMouseClicked(e -> {
@@ -323,7 +415,7 @@ public class Main extends Application {
                             player1Cards.add(ad.imageView);
                         }
                     } else {
-                        CardImageView add = new CardImageView(player1Cards.get(m).getStyleClass().get(2));
+                        CardImageView add = new CardImageView(player1Cards.get(m).getStyleClass().get(2).trim());
                         extraList.add(add.imageView);
                         System.out.println("----------size------");
                         System.out.println(player1Cards.size());
@@ -338,12 +430,12 @@ public class Main extends Application {
 //                }
                     if (extraList.size() > 1 && extraList.get(0).getStyleClass().get(2).equalsIgnoreCase("ht.gif"))
                         extraList.remove(0);
-
-                    load(grouping(player1Cards), grouping(player2Cards), grouping(playlist), extraList, stage);
                     if (player1Cards.size()==9) {
                         isActive1 = false;
                         isActive2 = true;
                     }
+                    load(grouping(player1Cards), grouping(player2Cards), grouping(playlist), extraList, stage);
+
                 }
             });
         }
@@ -359,7 +451,7 @@ public class Main extends Application {
                             player2Cards.add(ad.imageView);
                         }
                     } else {
-                        CardImageView add = new CardImageView(player2Cards.get(m).getStyleClass().get(2));
+                        CardImageView add = new CardImageView(player2Cards.get(m).getStyleClass().get(2).trim());
                         extraList.add(add.imageView);
                         player2Cards.remove(m);
                         if (player2Cards.size() == 0) {
@@ -369,11 +461,12 @@ public class Main extends Application {
                     }
                     if (extraList.size() > 1 && extraList.get(0).getStyleClass().get(2).equalsIgnoreCase("ht.gif"))
                         extraList.remove(0);
-                    load(grouping(player1Cards), grouping(player2Cards), grouping(playlist), extraList, stage);
                     if (player1Cards.size()==9) {
                         isActive1 = true;
                         isActive2 = false;
                     }
+                    load(grouping(player1Cards), grouping(player2Cards), (playlist), extraList, stage);
+
                 }
             });
 
@@ -391,13 +484,33 @@ public class Main extends Application {
                     }
                 }
                 else {
-                     add = new CardImageView(playlist.get(k).getStyleClass().get(2));
+                     add = new CardImageView(playlist.get(k).getStyleClass().get(2).trim());
                     if (isActive1) {
-                        player1Cards.add(add.imageView);
+                        boolean got = false;
+                        for (int i =0; i< player1Cards.size(); i++) {
+                            if (add.imageView.getStyleClass().get(1).equalsIgnoreCase(player1Cards.get(i).getStyleClass().get(1))) {
+                                player1Cards.add(i+1, add.imageView);
+                                got = true;
+                                break;
+                            }
+
+                        }
+                        if (!got)
+                            player1Cards.add(add.imageView);
                         Player1.isWon = whoWon(player1Cards);
                     }
                     else {
-                        player2Cards.add(add.imageView);
+                        boolean got = false;
+                        for (int i =0; i< player2Cards.size(); i++) {
+                            if (add.imageView.getStyleClass().get(1).equalsIgnoreCase(player2Cards.get(i).getStyleClass().get(1))) {
+                                player2Cards.add(i+1, add.imageView);
+                                got = true;
+                                break;
+                            }
+
+                        }
+                        if (!got)
+                            player2Cards.add(add.imageView);
                         Player2.isWon = whoWon(player2Cards);
                     }
                     playlist.remove(k);
@@ -411,45 +524,65 @@ public class Main extends Application {
             load(grouping(player1Cards), grouping(player2Cards), playlist,extraList, stage);
             add.imageView.setFitHeight(160);
         });
-        int  m = extraList.size()-1;
-        if (m> -1)
-        extraList.get(m).setOnMouseClicked(e->{
-            CardImageView add = new CardImageView("ht.gif");
-            if (extraList.get(m).getStyleClass().get(2).equalsIgnoreCase("ht.gif"))
-            {
-                extraList.remove(m);
-                if (extraList.size() == 0) {
-                    CardImageView ad = new CardImageView("ht.gif");
-                    extraList.add(ad.imageView);
-                }
-            }
-            else {
-                 add = new CardImageView(extraList.get(m).getStyleClass().get(2));
-                if (isActive2) {
-                    player2Cards.add(add.imageView);
-                    Player2.isWon = whoWon(player2Cards);
-                }
-                else {
-                    player1Cards.add(add.imageView);
-                    Player1.isWon = whoWon(player1Cards);
-                }
-                extraList.remove(m);
-                if (extraList.size() == 0) {
-                    CardImageView ad = new CardImageView("ht.gif");
-                    extraList.add(ad.imageView);
-                }
-            }
-            if (player2Cards.size() > 1&&player2Cards.get(0).getStyleClass().get(2).equalsIgnoreCase("ht.gif"))
-                player2Cards.remove(0);
-            load(grouping(player1Cards), grouping(player2Cards), (playlist),extraList, stage);
-            add.imageView.setFitHeight(160);
-        });
+//        int  m = extraList.size()-1;
+        for (int j = 0; j < extraList.size(); j++) {
+          final int top = extraList.size()-1;
+                extraList.get(j).setOnMouseClicked(e -> {
+                    CardImageView add = new CardImageView("ht.gif");
+                    if (extraList.get(top).getStyleClass().get(2).equalsIgnoreCase("ht.gif")) {
+                        extraList.remove(top);
+                        if (extraList.size() == 0) {
+                            CardImageView ad = new CardImageView("ht.gif");
+                            extraList.add(ad.imageView);
+                        }
+                    } else {
+                        add = new CardImageView(extraList.get(top).getStyleClass().get(2).trim());
+                        if (isActive2) {
+                            boolean got = false;
+                            for (int i = 0; i < player2Cards.size(); i++) {
+                                if (add.imageView.getStyleClass().get(1).equalsIgnoreCase(player2Cards.get(i).getStyleClass().get(1))) {
+                                    player2Cards.add(i+1, add.imageView);
+                                    got = true;
+                                    break;
+                                }
+
+                            }
+                            if (!got)
+                                player2Cards.add(add.imageView);
+                            Player2.isWon = whoWon(player2Cards);
+                        } else {
+                            boolean got = false;
+                            for (int i = 0; i < player1Cards.size(); i++) {
+                                if (add.imageView.getStyleClass().get(1).equalsIgnoreCase(player1Cards.get(i).getStyleClass().get(1))) {
+                                    player1Cards.add(i+1, add.imageView);
+                                    got = true;
+                                    break;
+                                }
+
+                            }
+                            if (!got)
+                                player1Cards.add(add.imageView);
+                            Player1.isWon = whoWon(player1Cards);
+                        }
+                        extraList.remove(top);
+                        if (extraList.size() == 0) {
+                            CardImageView ad = new CardImageView("ht.gif");
+                            extraList.add(ad.imageView);
+                        }
+                    }
+                    if (player2Cards.size() > 1 && player2Cards.get(0).getStyleClass().get(2).equalsIgnoreCase("ht.gif"))
+                        player2Cards.remove(0);
+                    load(grouping(player1Cards), grouping(player2Cards), (playlist), extraList, stage);
+                    add.imageView.setFitHeight(160);
+                });
+        }
     }
     public boolean whoWon(ArrayList<ImageView> list){
         list = grouping(list);
         ArrayList<ImageView> list1 = new ArrayList<>();
         int count =0;
-        int countOfCount = 0;
+        int countOfThree = 0;
+        int countOfOne = 0;
         boolean got = false;
         for (int i = 0; i < list.size(); i++) {
             count= 0;
@@ -459,16 +592,214 @@ public class Main extends Application {
                     count ++;
             }
             if (count==3)
-                countOfCount++;
-            if (count==1 && !got)
-                got = true;
+                countOfThree++;
+            if (count==1)
+                countOfOne++;
         }
-        if (countOfCount == 9 && got) {
+        if (countOfThree == 9 && countOfOne ==1) {
             System.out.println("\n\n\n\n 👋👋👋👋👋 won \n\n\n");
 
             return true;
         }
         return false;
+    }
+    public void onePlayer(Stage stage){
+        for (int i = 0; i < player1Cards.size(); i++) {
+            final int m = i;
+            player1Cards.get(i).setOnMouseClicked(e -> {
+                if (isActive1) {
+                    if (player1Cards.get(m).getStyleClass().get(2).equalsIgnoreCase("ht.gif")) {
+                        player1Cards.remove(m);
+                        if (player1Cards.size() == 0) {
+                            CardImageView ad = new CardImageView("ht.gif");
+                            player1Cards.add(ad.imageView);
+                        }
+                    } else {
+                        CardImageView add = new CardImageView(player1Cards.get(m).getStyleClass().get(2).trim());
+                        extraList.add(add.imageView);
+                        System.out.println("----------size------");
+                        System.out.println(player1Cards.size());
+                        player1Cards.remove(m);
+                        if (player1Cards.size() == 0) {
+                            CardImageView ad = new CardImageView("ht.gif");
+                            player1Cards.add(ad.imageView);
+                        }
+                    }
+                    if (extraList.size() > 1 && extraList.get(0).getStyleClass().get(2).equalsIgnoreCase("ht.gif"))
+                        extraList.remove(0);
+                    if (player1Cards.size() == 9) {
+                        isActive1 = false;
+                    }
+                    load(grouping(player1Cards), grouping(player2Cards), grouping(playlist), extraList, stage);
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        Platform.runLater(() -> {
+                            boolean got = false;
+                            CardImageView addTo = new CardImageView(extraList.get(extraList.size() - 1).getStyleClass().get(2));
+                            for (ImageView img : player2Cards) {
+                                if (addTo.imageView.getStyleClass().get(1).equalsIgnoreCase(img.getStyleClass().get(1))) {
+                                    got = true;
+                                    extraList.remove(extraList.size() - 1);
+                                    break;
+                                }
+                            }
+                            if (!got) {
+                                addTo = new CardImageView(playlist.get(playlist.size() - 1).getStyleClass().get(2));
+                                playlist.remove(playlist.size() - 1);
+                            }
+                            player2Cards.add(addTo.imageView);
+                            load(grouping(player1Cards), grouping(player2Cards), grouping(playlist), extraList, stage);
+                            Player2.isWon = whoWon(player2Cards);
+                        });
+                    }).start();
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        Platform.runLater(() -> {
+                            ImageView img = selectCard(player2Cards);
+                            CardImageView addToE = new CardImageView(img.getStyleClass().get(2));
+                                   extraList.add(addToE.imageView);
+                                    player2Cards.remove(img);
+
+                                    load(grouping(player1Cards), grouping(player2Cards), grouping(playlist), extraList, stage);
+
+                            isActive1 =true;
+                        });
+                    }).start();
+                }
+            });
+        }
+//
+//        for (int i = 0; i < player2Cards.size(); i++) {
+//            final int m = i;
+//            player2Cards.get(i).setOnMouseClicked(e -> {
+//                if (isActive2) {
+//                    if (player2Cards.get(m).getStyleClass().get(2).equalsIgnoreCase("ht.gif")) {
+//                        player2Cards.remove(m);
+//                        if (player2Cards.size() == 0) {
+//                            CardImageView ad = new CardImageView("ht.gif");
+//                            player2Cards.add(ad.imageView);
+//                        }
+//                    } else {
+//                        CardImageView add = new CardImageView(player2Cards.get(m).getStyleClass().get(2).trim());
+//                        extraList.add(add.imageView);
+//                        player2Cards.remove(m);
+//
+//                        if (player2Cards.size() == 0) {
+//                            CardImageView ad = new CardImageView("ht.gif");
+//                            player2Cards.add(ad.imageView);
+//                        }
+//                    }
+//                    if (extraList.size() > 1 && extraList.get(0).getStyleClass().get(2).equalsIgnoreCase("ht.gif"))
+//                        extraList.remove(0);
+//                    if (player1Cards.size()==9) {
+//                        isActive1 = true;
+//                        isActive2 = false;
+//                    }
+//                    load(grouping(player1Cards), grouping(player2Cards), (playlist), extraList, stage);
+//
+//                }
+//            });
+//
+//        }
+        int k = playlist.size() -1;
+        imageView.setOnMouseClicked(e->{
+            CardImageView add = new CardImageView("ht.gif");
+            if (k > -1)
+                if (playlist.get(k).getStyleClass().get(2).equalsIgnoreCase("ht.gif"))
+                {
+                    playlist.remove(k);
+                    if (playlist.size() == 0) {
+                        CardImageView ad = new CardImageView("ht.gif");
+                        playlist.add(ad.imageView);
+                    }
+                }
+                else {
+                    add = new CardImageView(playlist.get(k).getStyleClass().get(2).trim());
+                        boolean got = false;
+                        for (int i =0; i< player1Cards.size(); i++) {
+                            if (add.imageView.getStyleClass().get(1).equalsIgnoreCase(player1Cards.get(i).getStyleClass().get(1))) {
+                                player1Cards.add(i + 1, add.imageView);
+                                got = true;
+                                break;
+                            }
+                        }
+                        if (!got)
+                            player1Cards.add(add.imageView);
+                        Player1.isWon = whoWon(player1Cards);
+
+//                    else {
+//                        boolean got = false;
+//                        for (int i =0; i< player2Cards.size(); i++) {
+//                            if (add.imageView.getStyleClass().get(1).equalsIgnoreCase(player2Cards.get(i).getStyleClass().get(1))) {
+//                                player2Cards.add(i+1, add.imageView);
+//                                got = true;
+//                                break;
+//                            }
+//
+//                        }
+//                        if (!got)
+//                            player2Cards.add(add.imageView);
+//                        Player2.isWon = whoWon(player2Cards);
+//                    }
+                    playlist.remove(k);
+                    if (playlist.size() == 0) {
+                        CardImageView ad = new CardImageView("ht.gif");
+                        playlist.add(ad.imageView);
+                    }
+                }
+            if (player1Cards.size() > 1&&player1Cards.get(0).getStyleClass().get(2).equalsIgnoreCase("ht.gif"))
+                player1Cards.remove(0);
+            load(grouping(player1Cards), grouping(player2Cards), playlist,extraList, stage);
+            add.imageView.setFitHeight(160);
+        });
+
+        for (int j = 0; j < extraList.size(); j++) {
+            final int top = extraList.size()-1;
+            extraList.get(j).setOnMouseClicked(e -> {
+                CardImageView add = new CardImageView("ht.gif");
+                if (extraList.get(top).getStyleClass().get(2).equalsIgnoreCase("ht.gif")) {
+                    extraList.remove(top);
+                    if (extraList.size() == 0) {
+                        CardImageView ad = new CardImageView("ht.gif");
+                        extraList.add(ad.imageView);
+                    }
+                } else {
+                    add = new CardImageView(extraList.get(top).getStyleClass().get(2).trim());
+                    if (isActive1) {
+                        boolean got = false;
+                        for (int i = 0; i < player1Cards.size(); i++) {
+                            if (add.imageView.getStyleClass().get(1).equalsIgnoreCase(player1Cards.get(i).getStyleClass().get(1))) {
+                                player1Cards.add(i+1, add.imageView);
+                                got = true;
+                                break;
+                            }
+
+                        }
+                        if (!got)
+                            player2Cards.add(add.imageView);
+                        Player1.isWon = whoWon(player1Cards);
+                    }
+
+                    extraList.remove(top);
+                    if (extraList.size() == 0) {
+                        CardImageView ad = new CardImageView("ht.gif");
+                        extraList.add(ad.imageView);
+                    }
+                }
+                if (player2Cards.size() > 1 && player2Cards.get(0).getStyleClass().get(2).equalsIgnoreCase("ht.gif"))
+                    player2Cards.remove(0);
+                load(grouping(player1Cards), grouping(player2Cards), (playlist), extraList, stage);
+                add.imageView.setFitHeight(160);
+            });
+        }
     }
 }
 class CardImageView extends  ImageView{
@@ -479,7 +810,7 @@ class CardImageView extends  ImageView{
         this.imageView = new ImageView(new Image(Objects.requireNonNull(CardImageView.class.getResourceAsStream(path))));
         String[] name = this.name.split("");
         this.imageView.getStyleClass().add(name[name.length-1]);
-        this.imageView.getStyleClass().add(path);
+        this.imageView.getStyleClass().add(path.trim());
 //        System.out.println(this.imageView.getStyleClass().get(0));
 //        System.out.println(this.imageView.getStyleClass().get(1));
 //        System.out.println(this.imageView.getStyleClass().get(2));
